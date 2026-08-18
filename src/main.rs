@@ -19,7 +19,21 @@ fn main() {
 
     rl.set_target_fps(60);
 
-    if let Some(ruta_mapa) = menus::MenuInicio::mostrar(&mut rl, &thread) {
-        app::ejecutar(&mut rl, &thread, &ruta_mapa);
+    loop {
+        let seleccion = menus::MenuInicio::mostrar(&mut rl, &thread);
+
+        let Some((ruta_mapa, ruta_textura_pared, ruta_textura_enemigo)) = seleccion else {
+            break;
+        };
+
+        let jugar_de_nuevo = match app::ejecutar(&mut rl, &thread, &ruta_mapa, &ruta_textura_pared, &ruta_textura_enemigo) {
+            Some(app::EstadoFinal::GameOver) => menus::MenuGameOver::mostrar(&mut rl, &thread),
+            Some(app::EstadoFinal::Ganaste)  => menus::MenuGanaste::mostrar(&mut rl, &thread),
+            None => break,
+        };
+
+        if !jugar_de_nuevo {
+            break;
+        }
     }
 }

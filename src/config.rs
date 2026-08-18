@@ -18,3 +18,4 @@ pub const RAY_STEP_SIZE: f32 = 0.25;
 pub const PLAYER_SPEED: f32 = 35.0;
 pub const PLAYER_ROTATION_SPEED: f32 = 2.2;
 pub const PLAYER_RADIUS: f32 = 2.5;
+pub const ENEMY_RADIUS: f32 = 4.0;

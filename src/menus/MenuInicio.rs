@@ -22,7 +22,7 @@ const ASCII_ART: &[&str] = &[
     r"                                                                                                              ",
 ];
 
-pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<String> {
+pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, String, String)> {
     let mut pantalla = PantallaMenu::Principal;
 
     let opciones_principal = ["Jugar", "Salir"];
@@ -35,10 +35,6 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<String> {
             PantallaMenu::Principal => opciones_principal.len(),
             PantallaMenu::Niveles => opciones_niveles.len(),
         };
-
-        // ---------------------------------------------------------
-        // Navegación
-        // ---------------------------------------------------------
 
         if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
             seleccion = (seleccion + 1) % total;
@@ -76,17 +72,25 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<String> {
 
                 PantallaMenu::Niveles => {
                     match seleccion {
-                        0 => return Some("src/niveles/FNAF1.txt".to_string()),
-                        1 => return Some("src/niveles/FNAF2.txt".to_string()),
-                        _ => return Some("src/niveles/FNAF3.txt".to_string()),
+                        0 => return Some((
+                            "src/niveles/FNAF1.txt".to_string(),
+                            "src/assets/FNAF1assets/fnaf1wallpaper.png".to_string(),
+                            "src/assets/FNAF1assets/Feddy.jpg".to_string(),
+                        )),
+                        1 => return Some((
+                            "src/niveles/FNAF2.txt".to_string(),
+                            "src/assets/FNAF2assets/TexturaPared.png".to_string(),
+                            "src/assets/FNAF2assets/toyfeddy.png".to_string(),
+                        )),
+                        _ => return Some((
+                            "src/niveles/FNAF3.txt".to_string(),
+                            "src/assets/FNAF3assets/fnaf3wall.jpg".to_string(),
+                            "src/assets/FNAF3assets/sprintap.png".to_string(),
+                        )),
                     }
                 }
             }
         }
-
-        // ---------------------------------------------------------
-        // Tamaño de pantalla
-        // ---------------------------------------------------------
 
         let screen_width = rl.get_screen_width();
         let screen_height = rl.get_screen_height();
@@ -95,34 +99,12 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<String> {
 
         d.clear_background(Color::BLACK);
 
-        // ---------------------------------------------------------
-        // ASCII ART
-        // ---------------------------------------------------------
-
         let art_font_size = 12;
-
-        // Altura fija entre líneas.
         let art_line_height = 15;
-
-        /*
-            Cada carácter tendrá una "celda" horizontal fija.
-
-            Esto es lo que evita que:
-
-                |
-                /
-                W
-                _
-                \
-
-            tengan avances horizontales diferentes y destruyan
-            el ASCII art.
-        */
         let char_width = 7;
 
         let art_total_height = ASCII_ART.len() as i32 * art_line_height;
 
-        // Centrado vertical: arte + separación + (título opcional) + opciones.
         let num_opciones = match pantalla {
             PantallaMenu::Principal => opciones_principal.len() as i32,
             PantallaMenu::Niveles => opciones_niveles.len() as i32,
@@ -149,10 +131,6 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<String> {
             char_width,
             art_line_height,
         );
-
-        // ---------------------------------------------------------
-        // Menú
-        // ---------------------------------------------------------
 
         let menu_start_y = art_start_y + art_total_height + 50;
 
@@ -238,10 +216,6 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<String> {
     None
 }
 
-// ================================================================
-// ASCII ART CON CUADRÍCULA FIJA
-// ================================================================
-
 fn dibujar_ascii(
     d: &mut RaylibDrawHandle,
     start_x: i32,
@@ -279,10 +253,6 @@ fn dibujar_ascii(
         }
     }
 }
-
-// ================================================================
-// HINT INFERIOR
-// ================================================================
 
 fn dibujar_hint(
     d: &mut RaylibDrawHandle,

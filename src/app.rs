@@ -1,19 +1,24 @@
 use raylib::prelude::*;
 
-use crate::config::{CELL_SIZE, FIELD_OF_VIEW, WALL_THICKNESS};
+use crate::config::{CELL_SIZE, FIELD_OF_VIEW, PLAYER_RADIUS, WALL_THICKNESS};
 use crate::enemigo::Enemigo;
 use crate::jugador::Jugador;
 use crate::laberinto::Laberinto;
 use crate::raycaster::cast_field_of_view;
 use crate::render::Framebuffer;
 
-pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str) {
+pub enum EstadoFinal {
+    GameOver,
+    Ganaste,
+}
+
+pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, ruta_textura_pared: &str, ruta_textura_enemigo: &str) -> Option<EstadoFinal> {
     let mut laberinto = match Laberinto::cargar(ruta_mapa, CELL_SIZE) {
         Ok(laberinto) => laberinto,
 
         Err(error) => {
             eprintln!("{error}");
-            return;
+            return None;
         }
     };
 
@@ -25,7 +30,7 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str) {
 
         None => {
             eprintln!("No se encontró el símbolo '*' dentro del laberinto.");
-            return;
+            return None;
         }
     };
 
@@ -41,12 +46,12 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str) {
     let maze_height = laberinto.alto();
 
     let wall_texture = rl
-        .load_texture(thread, "src/assets/TexturaPared.png")
-        .expect("No se pudo cargar src/assets/TexturaPared.png");
+        .load_texture(thread, ruta_textura_pared)
+        .expect("No se pudo cargar la textura de pared");
 
     let feddy_texture = rl
-        .load_texture(thread, "src/assets/Feddy.jpg")
-        .expect("No se pudo cargar src/assets/Feddy.jpg");
+        .load_texture(thread, ruta_textura_enemigo)
+        .expect("No se pudo cargar la textura del enemigo");
 
     let enemigo = Enemigo::new(player_spawn.x + CELL_SIZE * 2.0, player_spawn.y);
 
@@ -70,6 +75,10 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str) {
         let frame_time = rl.get_frame_time();
 
         jugador.actualizar(rl, &laberinto, frame_time);
+
+        if enemigo.colisiona_con(jugador.posicion, PLAYER_RADIUS) {
+            return Some(EstadoFinal::GameOver);
+        }
 
         /*
          * Los rayos se recalculan después de mover o girar al personaje.
@@ -156,4 +165,6 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str) {
 
         framebuffer.draw_hud(&mut drawing, first_person_view, jugador.posicion, jugador.angulo);
     }
+
+    None
 }
