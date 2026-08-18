@@ -14,14 +14,9 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
     let opciones = ["Jugar de nuevo", "Salir"];
     let mut seleccion: usize = 0;
 
-    let mut gif_frame_count = 0i32;
-    let gif_image = Image::load_image_anim("src/assets/feddy2.gif", &mut gif_frame_count);
-    let gif_texture = rl
-        .load_texture_from_image(thread, &gif_image)
-        .expect("No se pudo crear textura de feddy2.gif");
-    let gif_frame_h = gif_texture.height() / gif_frame_count.max(1);
-    let mut gif_frame = 0i32;
-    let mut gif_timer = 0.0f32;
+    let imagen = rl
+        .load_texture(thread, "src/assets/FNAF2assets/toyboni.png")
+        .expect("No se pudo cargar toyboni.png");
 
     while !rl.window_should_close() {
         if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
@@ -41,11 +36,7 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
         }
 
         let frame_time = rl.get_frame_time();
-        gif_timer += frame_time;
-        if gif_timer >= 1.0 / 12.0 {
-            gif_timer -= 1.0 / 12.0;
-            gif_frame = (gif_frame + 1) % gif_frame_count.max(1);
-        }
+        let _ = frame_time;
 
         let screen_width = rl.get_screen_width();
         let screen_height = rl.get_screen_height();
@@ -69,11 +60,11 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
         dibujar_ascii(&mut d, art_x, art_start_y, art_font_size, char_width, art_line_height);
 
         let img_y = art_start_y + art_total_height + 20;
-        let img_w = (gif_texture.width() as f32 * img_h as f32 / gif_frame_h.max(1) as f32) as i32;
+        let img_w = (imagen.width() as f32 * img_h as f32 / imagen.height().max(1) as f32) as i32;
         let img_x = (screen_width - img_w) / 2;
         d.draw_texture_pro(
-            &gif_texture,
-            Rectangle::new(0.0, gif_frame as f32 * gif_frame_h as f32, gif_texture.width() as f32, gif_frame_h as f32),
+            &imagen,
+            Rectangle::new(0.0, 0.0, imagen.width() as f32, imagen.height() as f32),
             Rectangle::new(img_x as f32, img_y as f32, img_w as f32, img_h as f32),
             Vector2::new(0.0, 0.0),
             0.0,
@@ -112,7 +103,7 @@ fn dibujar_ascii(
                 continue;
             }
             let x = start_x + columna as i32 * char_width;
-            d.draw_text(&caracter.to_string(), x, y, font_size, Color::GREEN);
+            d.draw_text(&caracter.to_string(), x, y, font_size, Color::RED);
         }
     }
 }

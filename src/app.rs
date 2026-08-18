@@ -1,6 +1,6 @@
 use raylib::prelude::*;
 
-use crate::config::{CELL_SIZE, FIELD_OF_VIEW, PLAYER_RADIUS, WALL_THICKNESS};
+use crate::config::{CELL_SIZE, DURACION_JUEGO_SEGUNDOS, FIELD_OF_VIEW, PLAYER_RADIUS, TIEMPO_INICIO_ENEMIGOS, WALL_THICKNESS};
 use crate::enemigo::Enemigo;
 use crate::jugador::Jugador;
 use crate::laberinto::Laberinto;
@@ -53,9 +53,17 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         .load_texture(thread, ruta_textura_enemigo)
         .expect("No se pudo cargar la textura del enemigo");
 
-    let enemigo = Enemigo::new(player_spawn.x + CELL_SIZE * 2.0, player_spawn.y);
+    let salida_texture = rl
+        .load_texture(thread, "src/assets/salida.png")
+        .expect("No se pudo cargar src/assets/salida.png");
+
+    let spawn_enemigo = laberinto.posicion_valida_cerca(
+        Vector2::new(player_spawn.x + CELL_SIZE * 2.0, player_spawn.y),
+    );
+    let mut enemigo = Enemigo::new(spawn_enemigo.x, spawn_enemigo.y);
 
     let framebuffer = Framebuffer::new(CELL_SIZE, WALL_THICKNESS);
+    let mut tiempo_restante: f32 = DURACION_JUEGO_SEGUNDOS;
 
     while !rl.window_should_close() {
         /*
@@ -74,10 +82,22 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
 
         let frame_time = rl.get_frame_time();
 
+        tiempo_restante = (tiempo_restante - frame_time).max(0.0);
+        let salida_desbloqueada = tiempo_restante <= 0.0;
+        let enemigos_activos = tiempo_restante <= TIEMPO_INICIO_ENEMIGOS;
+
         jugador.actualizar(rl, &laberinto, frame_time);
 
         if enemigo.colisiona_con(jugador.posicion, PLAYER_RADIUS) {
             return Some(EstadoFinal::GameOver);
+        }
+
+        if enemigos_activos {
+            enemigo.mover_hacia(jugador.posicion, frame_time, &laberinto);
+        }
+
+        if salida_desbloqueada && laberinto.cerca_de_salida(jugador.posicion, CELL_SIZE * 1.5) {
+            return Some(EstadoFinal::Ganaste);
         }
 
         /*
@@ -127,6 +147,9 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
                 screen_height,
                 FIELD_OF_VIEW,
                 &wall_texture,
+                &salida_texture,
+                jugador.posicion,
+                &laberinto,
             );
 
             framebuffer.draw_enemies(
@@ -164,6 +187,7 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         }
 
         framebuffer.draw_hud(&mut drawing, first_person_view, jugador.posicion, jugador.angulo);
+        framebuffer.draw_timer(&mut drawing, tiempo_restante, screen_width, screen_height);
     }
 
     None

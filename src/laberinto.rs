@@ -87,6 +87,50 @@ impl Laberinto {
             return true;
         }
 
-        matches!(self.celdas[row][column], '+' | '-' | '|')
+        matches!(self.celdas[row][column], '+' | '-' | '|' | 's')
+    }
+
+    // Retorna pos si es celda abierta, o la primera celda abierta a distancias crecientes.
+    pub fn posicion_valida_cerca(&self, pos: Vector2) -> Vector2 {
+        if !self.es_pared(pos) {
+            return pos;
+        }
+        for n in 1..=20i32 {
+            let d = self.cell_size * n as f32;
+            let candidatos = [
+                Vector2::new(pos.x + d, pos.y),
+                Vector2::new(pos.x - d, pos.y),
+                Vector2::new(pos.x, pos.y + d),
+                Vector2::new(pos.x, pos.y - d),
+                Vector2::new(pos.x + d, pos.y + d),
+                Vector2::new(pos.x - d, pos.y + d),
+                Vector2::new(pos.x + d, pos.y - d),
+                Vector2::new(pos.x - d, pos.y - d),
+            ];
+            for c in candidatos {
+                if !self.es_pared(c) {
+                    return c;
+                }
+            }
+        }
+        pos
+    }
+
+    pub fn cerca_de_salida(&self, pos: Vector2, radio: f32) -> bool {
+        let min_col = ((pos.x - radio) / self.cell_size).floor().max(0.0) as usize;
+        let max_col = ((pos.x + radio) / self.cell_size).ceil() as usize;
+        let min_row = ((pos.y - radio) / self.cell_size).floor().max(0.0) as usize;
+        let max_row = ((pos.y + radio) / self.cell_size).ceil() as usize;
+
+        for row in min_row..=max_row {
+            if let Some(linea) = self.celdas.get(row) {
+                for col in min_col..=max_col {
+                    if linea.get(col) == Some(&'s') {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 }
