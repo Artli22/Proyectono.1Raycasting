@@ -1,17 +1,14 @@
 use raylib::prelude::*;
 
-use crate::config::{
-    CELL_SIZE, FIELD_OF_VIEW, INITIAL_WINDOW_HEIGHT, INITIAL_WINDOW_WIDTH, INPUT_FILE,
-    WALL_THICKNESS,
-};
+use crate::config::{CELL_SIZE, FIELD_OF_VIEW, WALL_THICKNESS};
 use crate::enemigo::Enemigo;
 use crate::jugador::Jugador;
 use crate::laberinto::Laberinto;
 use crate::raycaster::cast_field_of_view;
 use crate::render::Framebuffer;
 
-pub fn run() {
-    let mut laberinto = match Laberinto::cargar(INPUT_FILE, CELL_SIZE) {
+pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str) {
+    let mut laberinto = match Laberinto::cargar(ruta_mapa, CELL_SIZE) {
         Ok(laberinto) => laberinto,
 
         Err(error) => {
@@ -43,52 +40,44 @@ pub fn run() {
     let maze_width = laberinto.ancho();
     let maze_height = laberinto.alto();
 
-    let (mut raylib_handle, raylib_thread) = raylib::init()
-        .size(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT)
-        .title("Laberinto con Raycasting")
-        .resizable()
-        .build();
-
-    raylib_handle.set_target_fps(60);
-
-    let wall_texture = raylib_handle
-        .load_texture(&raylib_thread, "src/assets/TexturaPared.png")
+    let wall_texture = rl
+        .load_texture(thread, "src/assets/TexturaPared.png")
         .expect("No se pudo cargar src/assets/TexturaPared.png");
 
-    let feddy_texture = raylib_handle
-        .load_texture(&raylib_thread, "src/assets/Feddy.jpg")
+    let feddy_texture = rl
+        .load_texture(thread, "src/assets/Feddy.jpg")
         .expect("No se pudo cargar src/assets/Feddy.jpg");
 
     let enemigo = Enemigo::new(player_spawn.x + CELL_SIZE * 2.0, player_spawn.y);
 
     let framebuffer = Framebuffer::new(CELL_SIZE, WALL_THICKNESS);
 
-    while !raylib_handle.window_should_close() {
+    while !rl.window_should_close() {
         /*
          * E cambia entre vista superior 2D y vista de estacas.
          */
-        if raylib_handle.is_key_pressed(KeyboardKey::KEY_E) {
+        if rl.is_key_pressed(KeyboardKey::KEY_E) {
             first_person_view = !first_person_view;
         }
 
         /*
          * F11 cambia entre modo ventana y pantalla completa.
          */
-        if raylib_handle.is_key_pressed(KeyboardKey::KEY_F11) {
-            raylib_handle.toggle_fullscreen();
+        if rl.is_key_pressed(KeyboardKey::KEY_F11) {
+            rl.toggle_fullscreen();
         }
 
-        let frame_time = raylib_handle.get_frame_time();
+        let frame_time = rl.get_frame_time();
 
-        jugador.actualizar(&raylib_handle, &laberinto, frame_time);
+        jugador.actualizar(rl, &laberinto, frame_time);
 
         /*
          * Los rayos se recalculan después de mover o girar al personaje.
          */
         let rays = cast_field_of_view(&laberinto, jugador.posicion, jugador.angulo);
 
-        let screen_width = raylib_handle.get_screen_width();
-        let screen_height = raylib_handle.get_screen_height();
+        let screen_width = rl.get_screen_width();
+        let screen_height = rl.get_screen_height();
 
         /*
          * Escalado utilizado en la vista 2D.
@@ -116,7 +105,7 @@ pub fn run() {
         let offset_x = (screen_width as f32 - rendered_width) / 2.0;
         let offset_y = top_margin + (available_height - rendered_height) / 2.0;
 
-        let mut drawing = raylib_handle.begin_drawing(&raylib_thread);
+        let mut drawing = rl.begin_drawing(thread);
 
         framebuffer.clear(&mut drawing);
 
