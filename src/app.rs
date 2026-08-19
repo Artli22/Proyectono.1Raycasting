@@ -1,10 +1,10 @@
 use raylib::prelude::*;
 
-use crate::config::{CELL_SIZE, DURACION_JUEGO_SEGUNDOS, FIELD_OF_VIEW, PLAYER_RADIUS, TIEMPO_INICIO_ENEMIGOS, WALL_THICKNESS};
+use crate::config::{CELL_SIZE, DURACION_JUEGO_SEGUNDOS, FIELD_OF_VIEW, FLASHLIGHT_CONE_HALF, PLAYER_RADIUS, TIEMPO_INICIO_ENEMIGOS, WALL_THICKNESS};
 use crate::enemigo::Enemigo;
 use crate::jugador::Jugador;
 use crate::laberinto::Laberinto;
-use crate::raycaster::cast_field_of_view;
+use crate::raycaster::{cast_field_of_view, cast_ray, normalize_angle};
 use crate::render::Framebuffer;
 
 pub enum EstadoFinal {
@@ -22,9 +22,6 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         }
     };
 
-    /*
-     * player_spawn se guarda para colocar al enemigo cerca del inicio.
-     */
     let player_spawn = match laberinto.buscar_y_quitar_jugador() {
         Some(position) => position,
 
@@ -36,10 +33,6 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
 
     let mut jugador = Jugador::new(player_spawn);
 
-    /*
-     * false = vista superior 2D.
-     * true  = vista de estacas.
-     */
     let mut first_person_view = false;
 
     let maze_width = laberinto.ancho();
@@ -57,6 +50,18 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         .load_texture(thread, "src/assets/salida.png")
         .expect("No se pudo cargar src/assets/salida.png");
 
+    let tex_linterna_apagada = rl
+        .load_texture(thread, "src/assets/linterna_apagada.png")
+        .expect("No se pudo cargar src/assets/linterna_apagada.png");
+
+    let tex_linterna_encendida = rl
+        .load_texture(thread, "src/assets/linterna_encendida.png")
+        .expect("No se pudo cargar src/assets/linterna_encendida.png");
+
+    let tex_mano_linterna = rl
+        .load_texture(thread, "src/assets/mano_linterna.png")
+        .expect("No se pudo cargar src/assets/mano_linterna.png");
+
     let spawn_enemigo = laberinto.posicion_valida_cerca(
         Vector2::new(player_spawn.x + CELL_SIZE * 2.0, player_spawn.y),
     );
@@ -66,16 +71,10 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
     let mut tiempo_restante: f32 = DURACION_JUEGO_SEGUNDOS;
 
     while !rl.window_should_close() {
-        /*
-         * E cambia entre vista superior 2D y vista de estacas.
-         */
         if rl.is_key_pressed(KeyboardKey::KEY_E) {
             first_person_view = !first_person_view;
         }
 
-        /*
-         * F11 cambia entre modo ventana y pantalla completa.
-         */
         if rl.is_key_pressed(KeyboardKey::KEY_F11) {
             rl.toggle_fullscreen();
         }
@@ -92,6 +91,25 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
             return Some(EstadoFinal::GameOver);
         }
 
+        // Comprobar si el enemigo está dentro del cono de la linterna con línea de visión libre
+        enemigo.congelado = false;
+        if jugador.linterna_activa {
+            let dx = enemigo.posicion.x - jugador.posicion.x;
+            let dy = enemigo.posicion.y - jugador.posicion.y;
+            let dist_sq = dx * dx + dy * dy;
+            if dist_sq > 0.1 {
+                let angle_to = dy.atan2(dx);
+                let diff = normalize_angle(angle_to - jugador.angulo);
+                if diff.abs() < FLASHLIGHT_CONE_HALF {
+                    let distancia = dist_sq.sqrt();
+                    let los = cast_ray(&laberinto, jugador.posicion, angle_to);
+                    if los.distance + CELL_SIZE * 0.5 >= distancia {
+                        enemigo.congelado = true;
+                    }
+                }
+            }
+        }
+
         if enemigos_activos {
             enemigo.mover_hacia(jugador.posicion, frame_time, &laberinto);
         }
@@ -100,20 +118,11 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
             return Some(EstadoFinal::Ganaste);
         }
 
-        /*
-         * Los rayos se recalculan después de mover o girar al personaje.
-         */
         let rays = cast_field_of_view(&laberinto, jugador.posicion, jugador.angulo);
 
         let screen_width = rl.get_screen_width();
         let screen_height = rl.get_screen_height();
 
-        /*
-         * Escalado utilizado en la vista 2D.
-         *
-         * Se deja espacio en la parte superior
-         * para mostrar el HUD.
-         */
         let top_margin: f32 = 115.0;
 
         let available_width = screen_width as f32;
@@ -122,10 +131,6 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         let scale_x = available_width / maze_width;
         let scale_y = available_height / maze_height;
 
-        /*
-         * La escala menor mantiene el laberinto
-         * completamente dentro de la ventana.
-         */
         let scale = scale_x.min(scale_y);
 
         let rendered_width = maze_width * scale;
@@ -150,6 +155,7 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
                 &salida_texture,
                 jugador.posicion,
                 &laberinto,
+                jugador.linterna_activa,
             );
 
             framebuffer.draw_enemies(
@@ -161,6 +167,7 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
                 screen_height,
                 FIELD_OF_VIEW,
                 &[enemigo.posicion],
+                enemigo.congelado,
                 &feddy_texture,
             );
 
@@ -170,6 +177,17 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
                 jugador.posicion,
                 screen_width,
                 screen_height,
+            );
+
+            framebuffer.draw_linterna(
+                &mut drawing,
+                jugador.linterna_activa,
+                jugador.tiempo_total,
+                screen_width,
+                screen_height,
+                &tex_linterna_apagada,
+                &tex_linterna_encendida,
+                &tex_mano_linterna,
             );
         } else {
             framebuffer.draw_maze_2d(&mut drawing, laberinto.filas(), scale, offset_x, offset_y);

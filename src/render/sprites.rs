@@ -15,6 +15,7 @@ impl Framebuffer {
         screen_height: i32,
         field_of_view: f32,
         sprite_positions: &[Vector2],
+        congelado: bool,
         texture: &Texture2D,
     ) {
         if rays.is_empty() || sprite_positions.is_empty() {
@@ -24,8 +25,6 @@ impl Framebuffer {
         let width = screen_width as f32;
         let height = screen_height as f32;
         let num_rays = rays.len();
-
-        // Distancia corregida por rayo para z-buffer
         let depth_buffer: Vec<f32> = rays
             .iter()
             .map(|ray| {
@@ -48,7 +47,6 @@ impl Framebuffer {
             let sprite_angle = dy.atan2(dx);
             let angle_diff = normalize_angle(sprite_angle - player_angle);
 
-            // Margen extra para sprites parcialmente visibles en el borde del FOV
             if angle_diff.abs() > field_of_view / 2.0 + 0.3 {
                 continue;
             }
@@ -80,13 +78,19 @@ impl Framebuffer {
 
                 let tex_x = ((col as f32 - sprite_left) / sprite_width * tex_w).clamp(0.0, tex_w - 1.0);
 
+                let sprite_tint = if congelado {
+                    Color::new(150, 190, 255, 255)
+                } else {
+                    Color::WHITE
+                };
+
                 drawing.draw_texture_pro(
                     texture,
                     Rectangle::new(tex_x, 0.0, 1.0, tex_h),
                     Rectangle::new(col as f32, sprite_top, 1.0, sprite_height),
                     Vector2::new(0.0, 0.0),
                     0.0,
-                    Color::WHITE,
+                    sprite_tint,
                 );
             }
         }

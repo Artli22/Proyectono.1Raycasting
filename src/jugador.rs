@@ -7,6 +7,8 @@ use crate::raycaster::normalize_angle;
 pub struct Jugador {
     pub posicion: Vector2,
     pub angulo: f32,
+    pub linterna_activa: bool,
+    pub tiempo_total: f32,
 }
 
 impl Jugador {
@@ -14,21 +16,23 @@ impl Jugador {
         Self {
             posicion,
             angulo: 0.0,
+            linterna_activa: false,
+            tiempo_total: 0.0,
         }
     }
 
-    /*
-     * Movimiento direccional del jugador.
-     *
-     * W y S mueven según el ángulo actual.
-     * A y D modifican el ángulo.
-     */
+   
     pub fn actualizar(
         &mut self,
         raylib_handle: &RaylibHandle,
         laberinto: &Laberinto,
         frame_time: f32,
     ) {
+        if raylib_handle.is_key_pressed(KeyboardKey::KEY_F) {
+            self.linterna_activa = !self.linterna_activa;
+        }
+        self.tiempo_total += frame_time;
+
         if raylib_handle.is_key_down(KeyboardKey::KEY_A) {
             self.angulo -= PLAYER_ROTATION_SPEED * frame_time;
         }
@@ -37,17 +41,9 @@ impl Jugador {
             self.angulo += PLAYER_ROTATION_SPEED * frame_time;
         }
 
-        /*
-         * Mantiene el ángulo aproximadamente entre
-         * -PI y PI.
-         */
         self.angulo = normalize_angle(self.angulo);
 
-        /*
-         * Dirección hacia la que mira el jugador.
-         */
         let forward = Vector2::new(self.angulo.cos(), self.angulo.sin());
-
         let mut movement_x: f32 = 0.0;
         let mut movement_y: f32 = 0.0;
 
@@ -75,10 +71,6 @@ impl Jugador {
         movement_x *= movement_distance;
         movement_y *= movement_distance;
 
-        /*
-         * Se comprueban los ejes por separado para
-         * poder deslizarse junto a una pared.
-         */
         let proposed_x = Vector2::new(self.posicion.x + movement_x, self.posicion.y);
 
         if Self::puede_moverse_a(laberinto, proposed_x, PLAYER_RADIUS) {
@@ -92,14 +84,7 @@ impl Jugador {
         }
     }
 
-    /*
-     * Comprueba varios puntos alrededor del jugador
-     * para aproximar una colisión circular.
-     */
     fn puede_moverse_a(laberinto: &Laberinto, position: Vector2, radius: f32) -> bool {
-        /*
-         * Aproximación de radius / sqrt(2).
-         */
         let diagonal_radius = radius * 0.7071;
 
         let test_points = [

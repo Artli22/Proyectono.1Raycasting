@@ -5,12 +5,14 @@ use crate::laberinto::Laberinto;
 
 pub struct Enemigo {
     pub posicion: Vector2,
+    pub congelado: bool,
 }
 
 impl Enemigo {
     pub fn new(x: f32, y: f32) -> Self {
         Self {
             posicion: Vector2::new(x, y),
+            congelado: false,
         }
     }
 
@@ -22,6 +24,9 @@ impl Enemigo {
     }
 
     pub fn mover_hacia(&mut self, objetivo: Vector2, frame_time: f32, laberinto: &Laberinto) {
+        if self.congelado {
+            return;
+        }
         let dx = objetivo.x - self.posicion.x;
         let dy = objetivo.y - self.posicion.y;
         let distancia = (dx * dx + dy * dy).sqrt();

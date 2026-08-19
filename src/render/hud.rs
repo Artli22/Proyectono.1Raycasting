@@ -29,7 +29,7 @@ impl Framebuffer {
         );
 
         drawing.draw_text(
-            "E: cambiar vista | F11: pantalla completa | Esc: cerrar",
+            "E: cambiar vista | F: linterna | F11: pantalla completa | Esc: cerrar",
             10,
             52,
             16,
@@ -90,5 +90,73 @@ impl Framebuffer {
         let text_y = (box_y + (box_h - font_size as f32) / 2.0) as i32;
 
         drawing.draw_text(&texto, text_x, text_y, font_size, color);
+    }
+
+    pub fn draw_linterna(
+        &self,
+        drawing: &mut RaylibDrawHandle,
+        linterna_activa: bool,
+        tiempo: f32,
+        screen_width: i32,
+        screen_height: i32,
+        tex_apagada: &Texture2D,
+        tex_encendida: &Texture2D,
+        tex_mano: &Texture2D,
+    ) {
+        let sw = screen_width as f32;
+        let sh = screen_height as f32;
+        let bob = (tiempo * 2.2_f32).sin() * 4.0;
+
+        if linterna_activa {
+            let flicker = 1.0_f32 + 0.04 * (tiempo * 14.0).sin();
+            let beam_alpha = (85.0_f32 * flicker).clamp(0.0, 118.0) as u8;
+            drawing.draw_circle_gradient(
+                screen_width / 2,
+                screen_height / 2,
+                sw.min(sh) * 0.50,
+                Color::new(255, 248, 200, beam_alpha),
+                Color::new(0, 0, 0, 0),
+            );
+        }
+
+        {
+            let px = 10_i32;
+            let py = screen_height - 112;
+
+            drawing.draw_rectangle(px, py, 105, 104, Color::new(0, 0, 0, 195));
+            drawing.draw_rectangle_lines(px, py, 105, 104, Color::new(90, 90, 90, 200));
+
+            let label   = if linterna_activa { "LINTERNA: ON " } else { "LINTERNA: OFF" };
+            let lbl_col = if linterna_activa { Color::new(255, 232, 70, 230) } else { Color::new(120, 120, 120, 200) };
+            drawing.draw_text(label, px + 5, py + 5, 12, lbl_col);
+
+            let tex = if linterna_activa { tex_encendida } else { tex_apagada };
+            drawing.draw_texture_pro(
+                tex,
+                Rectangle::new(0.0, 0.0, tex.width() as f32, tex.height() as f32),
+                Rectangle::new((px + 5) as f32, (py + 23) as f32, 95.0, 76.0),
+                Vector2::new(0.0, 0.0),
+                0.0,
+                Color::WHITE,
+            );
+        }
+
+        {
+            let dst_w = sw * 0.42;
+            let aspect = tex_mano.width() as f32 / tex_mano.height() as f32;
+            let dst_h = dst_w / aspect;
+            let dst_x = sw * 0.52;
+            let dst_y = sh - dst_h + bob;
+
+            drawing.draw_texture_pro(
+                tex_mano,
+                Rectangle::new(0.0, 0.0, tex_mano.width() as f32, tex_mano.height() as f32),
+                Rectangle::new(dst_x, dst_y, dst_w, dst_h),
+                Vector2::new(0.0, 0.0),
+                0.0,
+                Color::WHITE,
+            );
+        }
+
     }
 }

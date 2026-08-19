@@ -10,21 +10,13 @@ pub struct RayHit {
     pub wall_x: f32,
 }
 
-/*
- * Genera todos los rayos correspondientes
- * al campo visual de 60 grados.
- */
+
 pub fn cast_field_of_view(
     laberinto: &Laberinto,
     player_position: Vector2,
     player_angle: f32,
 ) -> Vec<RayHit> {
     let mut rays = Vec::with_capacity(NUMBER_OF_RAYS);
-
-    /*
-     * El primer rayo se encuentra 30 grados
-     * a la izquierda del centro.
-     */
     let first_angle = player_angle - FIELD_OF_VIEW / 2.0;
 
     
@@ -43,11 +35,7 @@ pub fn cast_field_of_view(
     rays
 }
 
-/*
- * Lanza un único rayo hasta encontrar
- * una pared.
- */
-fn cast_ray(laberinto: &Laberinto, start: Vector2, angle: f32) -> RayHit {
+pub fn cast_ray(laberinto: &Laberinto, start: Vector2, angle: f32) -> RayHit {
     let direction_x = angle.cos();
     let direction_y = angle.sin();
 

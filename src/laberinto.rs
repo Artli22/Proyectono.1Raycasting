@@ -67,10 +67,6 @@ impl Laberinto {
         None
     }
 
-    /*
-     * Determina si un punto se encuentra dentro
-     * de una celda de pared.
-     */
     pub fn es_pared(&self, point: Vector2) -> bool {
         if point.x < 0.0 || point.y < 0.0 {
             return true;
@@ -90,7 +86,6 @@ impl Laberinto {
         matches!(self.celdas[row][column], '+' | '-' | '|' | 's')
     }
 
-    // Retorna pos si es celda abierta, o la primera celda abierta a distancias crecientes.
     pub fn posicion_valida_cerca(&self, pos: Vector2) -> Vector2 {
         if !self.es_pared(pos) {
             return pos;

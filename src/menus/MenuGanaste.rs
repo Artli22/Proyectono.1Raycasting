@@ -9,7 +9,6 @@ const ASCII_ART: &[&str] = &[
     r"                                        ",
 ];
 
-// Devuelve true si el jugador elige "Jugar de nuevo".
 pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
     let opciones = ["Jugar de nuevo", "Salir"];
     let mut seleccion: usize = 0;
