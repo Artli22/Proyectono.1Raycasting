@@ -145,7 +145,7 @@ impl Framebuffer {
             let dst_w = sw * 0.42;
             let aspect = tex_mano.width() as f32 / tex_mano.height() as f32;
             let dst_h = dst_w / aspect;
-            let dst_x = sw * 0.52;
+            let dst_x = sw * 0.62;
             let dst_y = sh - dst_h + bob;
 
             drawing.draw_texture_pro(

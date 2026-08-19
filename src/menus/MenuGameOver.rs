@@ -18,15 +18,23 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
         .expect("No se pudo cargar boni.png");
 
     while !rl.window_should_close() {
-        if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
+        let gp = rl.is_gamepad_available(0);
+
+        if rl.is_key_pressed(KeyboardKey::KEY_DOWN)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_DOWN))
+        {
             seleccion = (seleccion + 1) % opciones.len();
         }
 
-        if rl.is_key_pressed(KeyboardKey::KEY_UP) {
+        if rl.is_key_pressed(KeyboardKey::KEY_UP)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_UP))
+        {
             seleccion = if seleccion == 0 { opciones.len() - 1 } else { seleccion - 1 };
         }
 
-        if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
+        if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
+        {
             return seleccion == 0;
         }
 

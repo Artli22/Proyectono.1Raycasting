@@ -36,14 +36,6 @@ impl Framebuffer {
             '-' => self.draw_horizontal_wall(drawing, x, y, scale),
             '|' => self.draw_vertical_wall(drawing, x, y, scale),
             '#' => self.draw_start(drawing, x, y, scale),
-            '&' => self.draw_end(drawing, x, y, scale),
-            'c' => {
-                let size = self.cell_size * scale;
-                drawing.draw_rectangle_rec(
-                    Rectangle::new(x, y, size, size),
-                    Color::new(101, 67, 33, 150),
-                );
-            }
             's' => {
                 let size = self.cell_size * scale;
                 drawing.draw_rectangle_rec(

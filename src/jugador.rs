@@ -28,22 +28,43 @@ impl Jugador {
         laberinto: &Laberinto,
         frame_time: f32,
     ) {
-        if raylib_handle.is_key_pressed(KeyboardKey::KEY_F) {
+        const GAMEPAD: i32 = 0;
+        const DEADZONE: f32 = 0.2;
+
+        let gamepad_ok = raylib_handle.is_gamepad_available(GAMEPAD);
+
+        // Botón A del control o tecla F activan la linterna
+        let boton_a = gamepad_ok
+            && raylib_handle.is_gamepad_button_pressed(
+                GAMEPAD,
+                GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_DOWN,
+            );
+        if raylib_handle.is_key_pressed(KeyboardKey::KEY_F) || boton_a {
             self.linterna_activa = !self.linterna_activa;
         }
+
         self.tiempo_total += frame_time;
+
+        let gp_rot = if gamepad_ok {
+            let v = raylib_handle
+                .get_gamepad_axis_movement(GAMEPAD, GamepadAxis::GAMEPAD_AXIS_RIGHT_X);
+            if v.abs() > DEADZONE { v } else { 0.0 }
+        } else {
+            0.0
+        };
 
         if raylib_handle.is_key_down(KeyboardKey::KEY_A) {
             self.angulo -= PLAYER_ROTATION_SPEED * frame_time;
         }
-
         if raylib_handle.is_key_down(KeyboardKey::KEY_D) {
             self.angulo += PLAYER_ROTATION_SPEED * frame_time;
         }
-
+        self.angulo += gp_rot * PLAYER_ROTATION_SPEED * frame_time;
         self.angulo = normalize_angle(self.angulo);
 
         let forward = Vector2::new(self.angulo.cos(), self.angulo.sin());
+        let right = Vector2::new(-self.angulo.sin(), self.angulo.cos());
+
         let mut movement_x: f32 = 0.0;
         let mut movement_y: f32 = 0.0;
 
@@ -51,10 +72,21 @@ impl Jugador {
             movement_x += forward.x;
             movement_y += forward.y;
         }
-
         if raylib_handle.is_key_down(KeyboardKey::KEY_S) {
             movement_x -= forward.x;
             movement_y -= forward.y;
+        }
+
+        if gamepad_ok {
+            let lx = raylib_handle
+                .get_gamepad_axis_movement(GAMEPAD, GamepadAxis::GAMEPAD_AXIS_LEFT_X);
+            let ly = raylib_handle
+                .get_gamepad_axis_movement(GAMEPAD, GamepadAxis::GAMEPAD_AXIS_LEFT_Y);
+            let lx = if lx.abs() > DEADZONE { lx } else { 0.0 };
+            let ly = if ly.abs() > DEADZONE { ly } else { 0.0 };
+
+            movement_x += forward.x * (-ly) + right.x * lx;
+            movement_y += forward.y * (-ly) + right.y * lx;
         }
 
         let movement_length = (movement_x * movement_x + movement_y * movement_y).sqrt();

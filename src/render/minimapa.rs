@@ -83,19 +83,6 @@ impl Framebuffer {
                         );
                     }
 
-                    '&' => {
-                        // Final
-                        drawing.draw_rectangle_rec(
-                            Rectangle::new(
-                                x,
-                                y,
-                                self.cell_size * minimap_scale,
-                                self.cell_size * minimap_scale,
-                            ),
-                            Color::YELLOW,
-                        );
-                    }
-
                     _ => {}
                 }
             }

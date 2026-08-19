@@ -36,11 +36,17 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, 
             PantallaMenu::Niveles => opciones_niveles.len(),
         };
 
-        if rl.is_key_pressed(KeyboardKey::KEY_DOWN) {
+        let gp = rl.is_gamepad_available(0);
+
+        if rl.is_key_pressed(KeyboardKey::KEY_DOWN)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_DOWN))
+        {
             seleccion = (seleccion + 1) % total;
         }
 
-        if rl.is_key_pressed(KeyboardKey::KEY_UP) {
+        if rl.is_key_pressed(KeyboardKey::KEY_UP)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_LEFT_FACE_UP))
+        {
             seleccion = if seleccion == 0 {
                 total - 1
             } else {
@@ -59,7 +65,9 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, 
             }
         }
 
-        if rl.is_key_pressed(KeyboardKey::KEY_ENTER) {
+        if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
+        {
             match pantalla {
                 PantallaMenu::Principal => match seleccion {
                     0 => {

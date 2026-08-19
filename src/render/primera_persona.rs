@@ -17,7 +17,6 @@ impl Framebuffer {
         field_of_view: f32,
         wall_texture: &Texture2D,
         salida_texture: &Texture2D,
-        jugador_pos: Vector2,
         laberinto: &Laberinto,
         linterna_activa: bool,
     ) {
@@ -25,29 +24,7 @@ impl Framebuffer {
         let height = screen_height as f32;
 
         drawing.draw_rectangle(0, 0, screen_width, screen_height / 2, Color::new(40, 40, 40, 255));
-
-        // Suelo: color café en celdas 'c', gris oscuro en el resto.
-        let floor_proj_dist = (width / 2.0) / (field_of_view / 2.0).tan();
-        let cam_height = self.cell_size / 2.0;
-        for floor_y in (screen_height / 2)..screen_height {
-            let p = (floor_y as f32 - height / 2.0).max(0.1);
-            let d = floor_proj_dist * cam_height / p;
-            let sample_x = jugador_pos.x + d * player_angle.cos();
-            let sample_y = jugador_pos.y + d * player_angle.sin();
-            let cell_col = (sample_x / self.cell_size) as i32;
-            let cell_row = (sample_y / self.cell_size) as i32;
-            let es_cafe = cell_row >= 0
-                && cell_col >= 0
-                && laberinto.filas().get(cell_row as usize)
-                    .and_then(|r| r.get(cell_col as usize))
-                    == Some(&'c');
-            let floor_color = if es_cafe {
-                Color::new(101, 67, 33, 255)
-            } else {
-                Color::new(40, 40, 40, 255)
-            };
-            drawing.draw_rectangle(0, floor_y, screen_width, 1, floor_color);
-        }
+        drawing.draw_rectangle(0, screen_height / 2, screen_width, screen_height / 2, Color::new(40, 40, 40, 255));
 
         if rays.is_empty() {
             return;

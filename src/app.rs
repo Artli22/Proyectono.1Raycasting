@@ -46,9 +46,16 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         .load_texture(thread, ruta_textura_enemigo)
         .expect("No se pudo cargar la textura del enemigo");
 
+    let ruta_salida = if ruta_mapa.contains("FNAF1") {
+        "src/assets/FNAF1assets/salidafnaf1.png"
+    } else if ruta_mapa.contains("FNAF2") {
+        "src/assets/FNAF2assets/salidafnaf2.png"
+    } else {
+        "src/assets/FNAF3assets/salidafnaf3.png"
+    };
     let salida_texture = rl
-        .load_texture(thread, "src/assets/salida.png")
-        .expect("No se pudo cargar src/assets/salida.png");
+        .load_texture(thread, ruta_salida)
+        .expect("No se pudo cargar la textura de salida");
 
     let tex_linterna_apagada = rl
         .load_texture(thread, "src/assets/linterna_apagada.png")
@@ -71,7 +78,10 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
     let mut tiempo_restante: f32 = DURACION_JUEGO_SEGUNDOS;
 
     while !rl.window_should_close() {
-        if rl.is_key_pressed(KeyboardKey::KEY_E) {
+        let gp = rl.is_gamepad_available(0);
+        if rl.is_key_pressed(KeyboardKey::KEY_E)
+            || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_UP))
+        {
             first_person_view = !first_person_view;
         }
 
@@ -153,7 +163,6 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
                 FIELD_OF_VIEW,
                 &wall_texture,
                 &salida_texture,
-                jugador.posicion,
                 &laberinto,
                 jugador.linterna_activa,
             );
