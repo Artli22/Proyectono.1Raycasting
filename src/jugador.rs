@@ -33,7 +33,6 @@ impl Jugador {
 
         let gamepad_ok = raylib_handle.is_gamepad_available(GAMEPAD);
 
-        // Botón A del control o tecla F activan la linterna
         let boton_a = gamepad_ok
             && raylib_handle.is_gamepad_button_pressed(
                 GAMEPAD,

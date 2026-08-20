@@ -12,7 +12,39 @@ pub enum EstadoFinal {
     Ganaste,
 }
 
-pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, ruta_textura_pared: &str, ruta_textura_enemigo: &str) -> Option<EstadoFinal> {
+fn letra_a_textura(letra: char, ruta_mapa: &str) -> &'static str {
+    if ruta_mapa.contains("FNAF1") {
+        match letra {
+            'F' => "src/assets/FNAF1assets/Feddy.jpg",
+            'B' => "src/assets/FNAF1assets/bonni.png",
+            'C' => "src/assets/FNAF1assets/cica.png",
+            'X' => "src/assets/FNAF1assets/fexy.png",
+            'G' => "src/assets/FNAF1assets/goldenfeddy.png",
+            _ => "src/assets/FNAF1assets/Feddy.jpg",
+        }
+    } else if ruta_mapa.contains("FNAF2") {
+        match letra {
+            'T' => "src/assets/FNAF2assets/toyfeddy.png",
+            'N' => "src/assets/FNAF2assets/toybonni.png",
+            'Y' => "src/assets/FNAF2assets/toycica.png",
+            'O' => "src/assets/FNAF2assets/oldfoxy.png",
+            'R' => "src/assets/FNAF2assets/ruinfeddy.png",
+            'W' => "src/assets/FNAF2assets/oldboni.png",
+            'Q' => "src/assets/FNAF2assets/oldcica.png",
+            _ => "src/assets/FNAF2assets/toyfeddy.png",
+        }
+    } else {
+        match letra {
+            'P' => "src/assets/FNAF3assets/sprintap.png",
+            'H' => "src/assets/FNAF3assets/ghostfeddy.png",
+            'J' => "src/assets/FNAF3assets/ghostfoxy.png",
+            'D' => "src/assets/FNAF3assets/shadowbonni.png",
+            _ => "src/assets/FNAF3assets/sprintap.png",
+        }
+    }
+}
+
+pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, ruta_textura_pared: &str) -> Option<EstadoFinal> {
     let mut laberinto = match Laberinto::cargar(ruta_mapa, CELL_SIZE) {
         Ok(laberinto) => laberinto,
 
@@ -42,10 +74,6 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         .load_texture(thread, ruta_textura_pared)
         .expect("No se pudo cargar la textura de pared");
 
-    let feddy_texture = rl
-        .load_texture(thread, ruta_textura_enemigo)
-        .expect("No se pudo cargar la textura del enemigo");
-
     let ruta_salida = if ruta_mapa.contains("FNAF1") {
         "src/assets/FNAF1assets/salidafnaf1.png"
     } else if ruta_mapa.contains("FNAF2") {
@@ -69,10 +97,31 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         .load_texture(thread, "src/assets/mano_linterna.png")
         .expect("No se pudo cargar src/assets/mano_linterna.png");
 
-    let spawn_enemigo = laberinto.posicion_valida_cerca(
-        Vector2::new(player_spawn.x + CELL_SIZE * 2.0, player_spawn.y),
-    );
-    let mut enemigo = Enemigo::new(spawn_enemigo.x, spawn_enemigo.y);
+    let letras: &[char] = if ruta_mapa.contains("FNAF1") {
+        &['F', 'B', 'C', 'X', 'G']
+    } else if ruta_mapa.contains("FNAF2") {
+        &['T', 'N', 'Y', 'O', 'R', 'W', 'Q']
+    } else {
+        &['P', 'H', 'J', 'D']
+    };
+    let spawns = laberinto.extraer_enemigos(letras);
+    let mut rutas_tex: Vec<&str> = Vec::new();
+    let mut indices_tex: Vec<usize> = Vec::new();
+    for (letra, _) in &spawns {
+        let ruta = letra_a_textura(*letra, ruta_mapa);
+        let idx = rutas_tex.iter().position(|&r| r == ruta).unwrap_or_else(|| {
+            let i = rutas_tex.len();
+            rutas_tex.push(ruta);
+            i
+        });
+        indices_tex.push(idx);
+    }
+    let texturas_enemigos: Vec<Texture2D> = rutas_tex.iter()
+        .map(|ruta| rl.load_texture(thread, ruta).expect("No se pudo cargar textura de enemigo"))
+        .collect();
+    let mut enemigos: Vec<(Enemigo, usize)> = spawns.iter().zip(indices_tex.iter())
+        .map(|((_, pos), &idx)| (Enemigo::new(pos.x, pos.y), idx))
+        .collect();
 
     let framebuffer = Framebuffer::new(CELL_SIZE, WALL_THICKNESS);
     let mut tiempo_restante: f32 = DURACION_JUEGO_SEGUNDOS;
@@ -97,31 +146,37 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
 
         jugador.actualizar(rl, &laberinto, frame_time);
 
-        if enemigo.colisiona_con(jugador.posicion, PLAYER_RADIUS) {
-            return Some(EstadoFinal::GameOver);
+        for (enemigo, _) in &enemigos {
+            if enemigo.colisiona_con(jugador.posicion, PLAYER_RADIUS) {
+                return Some(EstadoFinal::GameOver);
+            }
         }
 
-        // Comprobar si el enemigo está dentro del cono de la linterna con línea de visión libre
-        enemigo.congelado = false;
-        if jugador.linterna_activa {
-            let dx = enemigo.posicion.x - jugador.posicion.x;
-            let dy = enemigo.posicion.y - jugador.posicion.y;
-            let dist_sq = dx * dx + dy * dy;
-            if dist_sq > 0.1 {
-                let angle_to = dy.atan2(dx);
-                let diff = normalize_angle(angle_to - jugador.angulo);
-                if diff.abs() < FLASHLIGHT_CONE_HALF {
-                    let distancia = dist_sq.sqrt();
-                    let los = cast_ray(&laberinto, jugador.posicion, angle_to);
-                    if los.distance + CELL_SIZE * 0.5 >= distancia {
-                        enemigo.congelado = true;
+        // Congelar enemigos visibles dentro del cono de linterna
+        for (enemigo, _) in &mut enemigos {
+            enemigo.congelado = false;
+            if jugador.linterna_activa {
+                let dx = enemigo.posicion.x - jugador.posicion.x;
+                let dy = enemigo.posicion.y - jugador.posicion.y;
+                let dist_sq = dx * dx + dy * dy;
+                if dist_sq > 0.1 {
+                    let angle_to = dy.atan2(dx);
+                    let diff = normalize_angle(angle_to - jugador.angulo);
+                    if diff.abs() < FLASHLIGHT_CONE_HALF {
+                        let distancia = dist_sq.sqrt();
+                        let los = cast_ray(&laberinto, jugador.posicion, angle_to);
+                        if los.distance + CELL_SIZE * 0.5 >= distancia {
+                            enemigo.congelado = true;
+                        }
                     }
                 }
             }
         }
 
         if enemigos_activos {
-            enemigo.mover_hacia(jugador.posicion, frame_time, &laberinto);
+            for (enemigo, _) in &mut enemigos {
+                enemigo.mover_hacia(jugador.posicion, frame_time, &laberinto);
+            }
         }
 
         if salida_desbloqueada && laberinto.cerca_de_salida(jugador.posicion, CELL_SIZE * 1.5) {
@@ -167,18 +222,20 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
                 jugador.linterna_activa,
             );
 
-            framebuffer.draw_enemies(
-                &mut drawing,
-                &rays,
-                jugador.posicion,
-                jugador.angulo,
-                screen_width,
-                screen_height,
-                FIELD_OF_VIEW,
-                &[enemigo.posicion],
-                enemigo.congelado,
-                &feddy_texture,
-            );
+            for (enemigo, tex_idx) in &enemigos {
+                framebuffer.draw_enemies(
+                    &mut drawing,
+                    &rays,
+                    jugador.posicion,
+                    jugador.angulo,
+                    screen_width,
+                    screen_height,
+                    FIELD_OF_VIEW,
+                    &[enemigo.posicion],
+                    enemigo.congelado,
+                    &texturas_enemigos[*tex_idx],
+                );
+            }
 
             framebuffer.draw_minimap(
                 &mut drawing,

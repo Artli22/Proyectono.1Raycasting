@@ -14,37 +14,36 @@ impl Framebuffer {
         let minimap_width = screen_width as f32 / 8.0;
         let minimap_height = screen_height as f32 / 8.0;
         let minimap_margin = 10.0;
-
-        // Posición en la esquina superior derecha
         let minimap_x = screen_width as f32 - minimap_width - minimap_margin;
         let minimap_y = minimap_margin;
 
-        // Fondo del mini mapa
         drawing.draw_rectangle_rec(
             Rectangle::new(minimap_x, minimap_y, minimap_width, minimap_height),
             Color::new(0, 0, 0, 200),
         );
 
-        // Borde del mini mapa
         drawing.draw_rectangle_lines_ex(
             Rectangle::new(minimap_x, minimap_y, minimap_width, minimap_height),
             2.0,
             Color::WHITE,
         );
 
-        // Calcular escala del mini mapa
-        let maze_width = maze.get(0).map(|r| r.len()).unwrap_or(0) as f32 * self.cell_size;
+        let maze_cols = maze.iter().map(|r| r.len()).max().unwrap_or(0) as f32;
+        let maze_width = maze_cols * self.cell_size;
         let maze_height = maze.len() as f32 * self.cell_size;
 
         let scale_x = minimap_width / maze_width;
         let scale_y = minimap_height / maze_height;
         let minimap_scale = scale_x.min(scale_y);
+        let rendered_w = maze_cols * self.cell_size * minimap_scale;
+        let rendered_h = maze.len() as f32 * self.cell_size * minimap_scale;
+        let offset_x = (minimap_width - rendered_w) / 2.0;
+        let offset_y = (minimap_height - rendered_h) / 2.0;
 
-        // Dibujar el laberinto en miniatura
         for (row, line) in maze.iter().enumerate() {
             for (column, symbol) in line.iter().enumerate() {
-                let x = minimap_x + column as f32 * self.cell_size * minimap_scale;
-                let y = minimap_y + row as f32 * self.cell_size * minimap_scale;
+                let x = minimap_x + offset_x + column as f32 * self.cell_size * minimap_scale;
+                let y = minimap_y + offset_y + row as f32 * self.cell_size * minimap_scale;
 
                 match symbol {
                     '+' => {
@@ -88,8 +87,8 @@ impl Framebuffer {
             }
         }
 
-        let player_minimap_x = minimap_x + (player_position.x * minimap_scale);
-        let player_minimap_y = minimap_y + (player_position.y * minimap_scale);
+        let player_minimap_x = minimap_x + offset_x + (player_position.x * minimap_scale);
+        let player_minimap_y = minimap_y + offset_y + (player_position.y * minimap_scale);
 
         drawing.draw_circle(player_minimap_x as i32, player_minimap_y as i32, 4.0, Color::WHITE);
 

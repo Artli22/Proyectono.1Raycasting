@@ -67,6 +67,24 @@ impl Laberinto {
         None
     }
 
+    pub fn extraer_enemigos(&mut self, letras: &[char]) -> Vec<(char, Vector2)> {
+        let mut resultado = Vec::new();
+        for (row, line) in self.celdas.iter_mut().enumerate() {
+            for (col, symbol) in line.iter_mut().enumerate() {
+                if letras.contains(symbol) {
+                    let letra = *symbol;
+                    let pos = Vector2::new(
+                        col as f32 * self.cell_size + self.cell_size / 2.0,
+                        row as f32 * self.cell_size + self.cell_size / 2.0,
+                    );
+                    *symbol = ' ';
+                    resultado.push((letra, pos));
+                }
+            }
+        }
+        resultado
+    }
+
     pub fn es_pared(&self, point: Vector2) -> bool {
         if point.x < 0.0 || point.y < 0.0 {
             return true;

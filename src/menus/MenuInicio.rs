@@ -22,7 +22,7 @@ const ASCII_ART: &[&str] = &[
     r"                                                                                                              ",
 ];
 
-pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, String, String)> {
+pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, String)> {
     let mut pantalla = PantallaMenu::Principal;
 
     let opciones_principal = ["Jugar", "Salir"];
@@ -83,17 +83,14 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, 
                         0 => return Some((
                             "src/niveles/FNAF1.txt".to_string(),
                             "src/assets/FNAF1assets/fnaf1wallpaper.png".to_string(),
-                            "src/assets/FNAF1assets/Feddy.jpg".to_string(),
                         )),
                         1 => return Some((
                             "src/niveles/FNAF2.txt".to_string(),
                             "src/assets/FNAF2assets/TexturaPared.png".to_string(),
-                            "src/assets/FNAF2assets/toyfeddy.png".to_string(),
                         )),
                         _ => return Some((
                             "src/niveles/FNAF3.txt".to_string(),
                             "src/assets/FNAF3assets/fnaf3wall.jpg".to_string(),
-                            "src/assets/FNAF3assets/sprintap.png".to_string(),
                         )),
                     }
                 }

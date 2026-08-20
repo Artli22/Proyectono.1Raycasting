@@ -22,11 +22,11 @@ fn main() {
     loop {
         let seleccion = menus::MenuInicio::mostrar(&mut rl, &thread);
 
-        let Some((ruta_mapa, ruta_textura_pared, ruta_textura_enemigo)) = seleccion else {
+        let Some((ruta_mapa, ruta_textura_pared)) = seleccion else {
             break;
         };
 
-        let jugar_de_nuevo = match app::ejecutar(&mut rl, &thread, &ruta_mapa, &ruta_textura_pared, &ruta_textura_enemigo) {
+        let jugar_de_nuevo = match app::ejecutar(&mut rl, &thread, &ruta_mapa, &ruta_textura_pared) {
             Some(app::EstadoFinal::GameOver) => menus::MenuGameOver::mostrar(&mut rl, &thread),
             Some(app::EstadoFinal::Ganaste)  => menus::MenuGanaste::mostrar(&mut rl, &thread),
             None => break,

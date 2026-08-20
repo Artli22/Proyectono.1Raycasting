@@ -14,8 +14,8 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
     let mut seleccion: usize = 0;
 
     let boni_texture = rl
-        .load_texture(thread, "src/assets/FNAF1assets/boni.png")
-        .expect("No se pudo cargar boni.png");
+        .load_texture(thread, "src/assets/FNAF1assets/bonbon.png")
+        .expect("No se pudo cargar src/assets/FNAF1assets/bonbon.png");
 
     while !rl.window_should_close() {
         let gp = rl.is_gamepad_available(0);
