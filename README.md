@@ -13,3 +13,26 @@
 - Por agregar una pantalla de exito cuando se cumpla una condicion en el nivel
 
 ### Video de evidencia de funcionamiento: 
+[https://youtu.be/Z7cbklTlOh8](https://youtu.be/Rgv9sBo3N14)
+
+### Controles 
+
+#### Movimiento en 4 direcciones
+- Teclas WASD 
+- Palanca Izquierda
+
+#### Utilizar linterna
+- Tecla F
+- Boton A
+
+#### Cambiar perspectiva 2D a 3D
+- Tecla E
+- Boton Y
+
+#### Navegar opciones de menu 
+- Teclas ↑ ↓
+- Botones de cruz
+
+#### Seleccionar opciones
+- Tecla enter
+- Boton B
