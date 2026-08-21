@@ -7,6 +7,7 @@ use crate::raycaster::{normalize_angle, RayHit};
 use super::Framebuffer;
 
 impl Framebuffer {
+    // Dibujo de la vista en primera persona del jugador, con iluminacion y texturas
     pub fn draw_first_person_view(
         &self,
         drawing: &mut RaylibDrawHandle,

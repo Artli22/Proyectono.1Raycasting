@@ -3,6 +3,7 @@ use raylib::prelude::*;
 use super::Framebuffer;
 
 impl Framebuffer {
+    // Dibujo del minimapa, reescalando el tamaño del laberinto y el jugador 
     pub fn draw_minimap(
         &self,
         drawing: &mut RaylibDrawHandle,

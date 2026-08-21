@@ -1,5 +1,6 @@
 use raylib::prelude::*;
 
+// Archivo padre que dicta a todo archivo de renderizacion en pantalla 
 pub struct Framebuffer {
     pub(super) cell_size: f32,
     pub(super) wall_thickness: f32,

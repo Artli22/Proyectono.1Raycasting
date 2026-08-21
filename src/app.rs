@@ -1,5 +1,6 @@
 use raylib::prelude::*;
 
+use crate::audio::Sonidos;
 use crate::config::{CELL_SIZE, DURACION_JUEGO_SEGUNDOS, FIELD_OF_VIEW, FLASHLIGHT_CONE_HALF, PLAYER_RADIUS, TIEMPO_INICIO_ENEMIGOS, WALL_THICKNESS};
 use crate::enemigo::Enemigo;
 use crate::jugador::Jugador;
@@ -12,6 +13,7 @@ pub enum EstadoFinal {
     Ganaste,
 }
 
+// Enrutamiento del sprite del enemigo con su letra asignada en el txt
 fn letra_a_textura(letra: char, ruta_mapa: &str) -> &'static str {
     if ruta_mapa.contains("FNAF1") {
         match letra {
@@ -44,7 +46,8 @@ fn letra_a_textura(letra: char, ruta_mapa: &str) -> &'static str {
     }
 }
 
-pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, ruta_textura_pared: &str) -> Option<EstadoFinal> {
+// Carga y enrutamiento de todos los assets del juego, sprites, dibujo de las paredes y sonidos; tambien contiene las mecanicas del juego
+pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, ruta_textura_pared: &str, sonidos: &Sonidos<'_>) -> Option<EstadoFinal> {
     let mut laberinto = match Laberinto::cargar(ruta_mapa, CELL_SIZE) {
         Ok(laberinto) => laberinto,
 
@@ -126,6 +129,12 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
     let framebuffer = Framebuffer::new(CELL_SIZE, WALL_THICKNESS);
     let mut tiempo_restante: f32 = DURACION_JUEGO_SEGUNDOS;
 
+    let mut ambiente_timer: f32 = 0.0;
+    let mut ambiente_idx: usize = 0;
+    if !sonidos.ambientes.is_empty() {
+        sonidos.ambientes[0].play();
+    }
+
     while !rl.window_should_close() {
         let gp = rl.is_gamepad_available(0);
         if rl.is_key_pressed(KeyboardKey::KEY_E)
@@ -144,7 +153,17 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
         let salida_desbloqueada = tiempo_restante <= 0.0;
         let enemigos_activos = tiempo_restante <= TIEMPO_INICIO_ENEMIGOS;
 
-        jugador.actualizar(rl, &laberinto, frame_time);
+        ambiente_timer += frame_time;
+        if !sonidos.ambientes.is_empty()
+            && ambiente_timer >= 60.0
+            && !sonidos.ambientes[ambiente_idx].is_playing()
+        {
+            ambiente_idx = (ambiente_idx + 1) % sonidos.ambientes.len();
+            sonidos.ambientes[ambiente_idx].play();
+            ambiente_timer = 0.0;
+        }
+
+        jugador.actualizar(rl, &laberinto, frame_time, &sonidos.caminando, &sonidos.linterna);
 
         for (enemigo, _) in &enemigos {
             if enemigo.colisiona_con(jugador.posicion, PLAYER_RADIUS) {
@@ -152,7 +171,7 @@ pub fn ejecutar(rl: &mut RaylibHandle, thread: &RaylibThread, ruta_mapa: &str, r
             }
         }
 
-        // Congelar enemigos visibles dentro del cono de linterna
+        // Mecanica de congelamiento de enemigos por linterna
         for (enemigo, _) in &mut enemigos {
             enemigo.congelado = false;
             if jugador.linterna_activa {

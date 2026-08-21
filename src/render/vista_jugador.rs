@@ -5,6 +5,7 @@ use crate::raycaster::RayHit;
 use super::Framebuffer;
 
 impl Framebuffer {
+    // Dibujo del jugador en el mapa 2D 
     pub fn draw_player_2d(
         &self,
         drawing: &mut RaylibDrawHandle,
@@ -23,10 +24,6 @@ impl Framebuffer {
 
         drawing.draw_circle_v(center, radius, self.player_color);
 
-        /*
-         * Esta línea muestra hacia dónde
-         * está mirando el jugador.
-         */
         let direction_length = self.cell_size * 1.2 * scale;
 
         let direction_end = Vector2::new(
@@ -37,6 +34,7 @@ impl Framebuffer {
         drawing.draw_line_ex(center, direction_end, (2.0 * scale).max(1.0), Color::ORANGE);
     }
 
+    // Dibujo de representacion 2D del rango de vista del jugador
     pub fn draw_rays_2d(
         &self,
         drawing: &mut RaylibDrawHandle,

@@ -10,7 +10,7 @@ pub struct RayHit {
     pub wall_x: f32,
 }
 
-
+// Calcular el rango de vision del jugador para dibujarlo en pantalla
 pub fn cast_field_of_view(
     laberinto: &Laberinto,
     player_position: Vector2,
@@ -35,6 +35,7 @@ pub fn cast_field_of_view(
     rays
 }
 
+// Calcular la distancia de la pared mas cercana al jugador y el punto de colision con la pared
 pub fn cast_ray(laberinto: &Laberinto, start: Vector2, angle: f32) -> RayHit {
     let direction_x = angle.cos();
     let direction_y = angle.sin();

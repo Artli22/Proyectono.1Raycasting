@@ -3,6 +3,7 @@ use raylib::prelude::*;
 use super::Framebuffer;
 
 impl Framebuffer {
+    // Dibujo del laberinto en 2D, interpretando los simbolos del txt 
     pub fn draw_maze_2d(
         &self,
         drawing: &mut RaylibDrawHandle,

@@ -1,4 +1,5 @@
-﻿use raylib::prelude::*;
+﻿use raylib::audio::Sound;
+use raylib::prelude::*;
 
 #[derive(Clone, Copy, PartialEq)]
 enum PantallaMenu {
@@ -22,7 +23,7 @@ const ASCII_ART: &[&str] = &[
     r"                                                                                                              ",
 ];
 
-pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, String)> {
+pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread, sonido_boton: &Sound<'_>) -> Option<(String, String)> {
     let mut pantalla = PantallaMenu::Principal;
 
     let opciones_principal = ["Jugar", "Salir"];
@@ -68,6 +69,7 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> Option<(String, 
         if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
             || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
         {
+            sonido_boton.play();
             match pantalla {
                 PantallaMenu::Principal => match seleccion {
                     0 => {

@@ -8,6 +8,7 @@ pub struct Laberinto {
 }
 
 impl Laberinto {
+    // Cargar el laberinto mediante los txt
     pub fn cargar(ruta: &str, cell_size: f32) -> Result<Self, String> {
         let contenido = fs::read_to_string(ruta)
             .map_err(|error| format!("No se pudo leer el archivo '{ruta}': {error}"))?;
@@ -44,10 +45,7 @@ impl Laberinto {
         self.celdas.len() as f32 * self.cell_size
     }
 
-    /*
-     * Busca el símbolo '*' dentro del mapa y lo reemplaza
-     * por un espacio porque la posición del jugador es dinámica.
-     */
+    // Busca el simbolo '*' en el txt para saber la posicion inicial del jugador 
     pub fn buscar_y_quitar_jugador(&mut self) -> Option<Vector2> {
         for (row, line) in self.celdas.iter_mut().enumerate() {
             for (column, symbol) in line.iter_mut().enumerate() {
@@ -67,6 +65,7 @@ impl Laberinto {
         None
     }
 
+    // Busca las letras de los enemigos en el txt para saber la posicion inicial
     pub fn extraer_enemigos(&mut self, letras: &[char]) -> Vec<(char, Vector2)> {
         let mut resultado = Vec::new();
         for (row, line) in self.celdas.iter_mut().enumerate() {
@@ -84,7 +83,8 @@ impl Laberinto {
         }
         resultado
     }
-
+    
+    // Dibujo de la pared del laberinto
     pub fn es_pared(&self, point: Vector2) -> bool {
         if point.x < 0.0 || point.y < 0.0 {
             return true;
@@ -95,7 +95,7 @@ impl Laberinto {
 
         if row >= self.celdas.len() {
             return true;
-        }
+        }   
 
         if column >= self.celdas[row].len() {
             return true;
@@ -104,6 +104,7 @@ impl Laberinto {
         matches!(self.celdas[row][column], '+' | '-' | '|' | 's')
     }
 
+    // Verifica si el jugador esta cerca de una pared para evitar traspasarla, colisiones para la pared
     pub fn posicion_valida_cerca(&self, pos: Vector2) -> Vector2 {
         if !self.es_pared(pos) {
             return pos;
@@ -129,6 +130,7 @@ impl Laberinto {
         pos
     }
 
+    // Verifica si el jugador esta cerca de la salida
     pub fn cerca_de_salida(&self, pos: Vector2, radio: f32) -> bool {
         let min_col = ((pos.x - radio) / self.cell_size).floor().max(0.0) as usize;
         let max_col = ((pos.x + radio) / self.cell_size).ceil() as usize;

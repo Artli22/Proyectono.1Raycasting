@@ -1,3 +1,4 @@
+use raylib::audio::Sound;
 use raylib::prelude::*;
 
 use crate::config::{PLAYER_RADIUS, PLAYER_ROTATION_SPEED, PLAYER_SPEED};
@@ -12,6 +13,8 @@ pub struct Jugador {
 }
 
 impl Jugador {
+
+    // Configuracion inicial del jugador
     pub fn new(posicion: Vector2) -> Self {
         Self {
             posicion,
@@ -21,12 +24,14 @@ impl Jugador {
         }
     }
 
-   
+   // Actualizar posicion, acciones y elementos relacionados con el jugador
     pub fn actualizar(
         &mut self,
         raylib_handle: &RaylibHandle,
         laberinto: &Laberinto,
         frame_time: f32,
+        sonido_caminando: &Sound<'_>,
+        sonido_linterna: &Sound<'_>,
     ) {
         const GAMEPAD: i32 = 0;
         const DEADZONE: f32 = 0.2;
@@ -40,6 +45,7 @@ impl Jugador {
             );
         if raylib_handle.is_key_pressed(KeyboardKey::KEY_F) || boton_a {
             self.linterna_activa = !self.linterna_activa;
+            sonido_linterna.play();
         }
 
         self.tiempo_total += frame_time;
@@ -91,7 +97,14 @@ impl Jugador {
         let movement_length = (movement_x * movement_x + movement_y * movement_y).sqrt();
 
         if movement_length == 0.0 {
+            if sonido_caminando.is_playing() {
+                sonido_caminando.stop();
+            }
             return;
+        }
+
+        if !sonido_caminando.is_playing() {
+            sonido_caminando.play();
         }
 
         movement_x /= movement_length;
@@ -115,6 +128,7 @@ impl Jugador {
         }
     }
 
+    // Verificar si el jugador puede moverse de posicion sin colisionar con paredes
     fn puede_moverse_a(laberinto: &Laberinto, position: Vector2, radius: f32) -> bool {
         let diagonal_radius = radius * 0.7071;
 

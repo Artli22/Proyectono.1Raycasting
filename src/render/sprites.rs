@@ -5,6 +5,8 @@ use crate::raycaster::{normalize_angle, RayHit};
 use super::Framebuffer;
 
 impl Framebuffer {
+    
+    // Dibujo de los enemigos en primera persona, aseguran que siempre esten "viendo" al jugador
     pub fn draw_enemies(
         &self,
         drawing: &mut RaylibDrawHandle,

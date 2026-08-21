@@ -1,4 +1,5 @@
-﻿use raylib::prelude::*;
+﻿use raylib::audio::Sound;
+use raylib::prelude::*;
 
 const ASCII_ART: &[&str] = &[
     r"  __   __           __        ___       ",
@@ -9,7 +10,7 @@ const ASCII_ART: &[&str] = &[
     r"                                        ",
 ];
 
-pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
+pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread, sonido_boton: &Sound<'_>) -> bool {
     let opciones = ["Jugar de nuevo", "Salir"];
     let mut seleccion: usize = 0;
 
@@ -35,6 +36,7 @@ pub fn mostrar(rl: &mut RaylibHandle, thread: &RaylibThread) -> bool {
         if rl.is_key_pressed(KeyboardKey::KEY_ENTER)
             || (gp && rl.is_gamepad_button_pressed(0, GamepadButton::GAMEPAD_BUTTON_RIGHT_FACE_RIGHT))
         {
+            sonido_boton.play();
             return seleccion == 0;
         }
 

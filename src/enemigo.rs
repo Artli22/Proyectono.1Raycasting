@@ -16,6 +16,7 @@ impl Enemigo {
         }
     }
 
+    // Verificar que el enemigo toca al jugador
     pub fn colisiona_con(&self, jugador_pos: Vector2, radio_jugador: f32) -> bool {
         let dx = self.posicion.x - jugador_pos.x;
         let dy = self.posicion.y - jugador_pos.y;
@@ -23,21 +24,24 @@ impl Enemigo {
         dx * dx + dy * dy < radio_suma * radio_suma
     }
 
+    // Recalcular el movimiento del enemigo si hay una pared de por medio
     pub fn mover_hacia(&mut self, objetivo: Vector2, frame_time: f32, laberinto: &Laberinto) {
         if self.congelado {
             return;
         }
+
         let dx = objetivo.x - self.posicion.x;
         let dy = objetivo.y - self.posicion.y;
         let distancia = (dx * dx + dy * dy).sqrt();
+
         if distancia < 1.0 {
             return;
         }
+
         let dir_x = dx / distancia;
         let dir_y = dy / distancia;
         let paso = VELOCIDAD_ENEMIGO * frame_time;
 
-        // Paso de escape > CELL_SIZE/2 para cruzar la frontera de cualquier celda de pared.
         if laberinto.es_pared(self.posicion) {
             let escape_paso = CELL_SIZE * 0.6;
             let salidas = [(escape_paso, 0.0f32), (-escape_paso, 0.0f32), (0.0f32, escape_paso), (0.0f32, -escape_paso)];
@@ -52,10 +56,13 @@ impl Enemigo {
         }
 
         let nueva_x = Vector2::new(self.posicion.x + dir_x * paso, self.posicion.y);
+
         if !laberinto.es_pared(nueva_x) {
             self.posicion.x = nueva_x.x;
         }
+
         let nueva_y = Vector2::new(self.posicion.x, self.posicion.y + dir_y * paso);
+
         if !laberinto.es_pared(nueva_y) {
             self.posicion.y = nueva_y.y;
         }
